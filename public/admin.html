@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aeon Tap · Dashboard</title><meta name="robots" content="noindex">
+
+<script src="/qr.js"></script>
+<style>
+:root{--g1:#f7de9a;--g2:#d4a24a;--line:#2a2418;--mut:#9a927f;--grad:linear-gradient(120deg,#8c601d,#f7de9a 45%,#d4a24a 70%,#8c601d)}
+*{box-sizing:border-box;margin:0}body{background:#050505;color:#efe9dc;font:300 16px/1.6 Jost,Arial,sans-serif}
+.w{max-width:1100px;margin:auto;padding:28px 22px 80px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;letter-spacing:.28em;font-weight:500}
+.btn{padding:10px 20px;border-radius:99px;border:1px solid var(--g2);background:none;color:var(--g1);font:500 11px Jost,sans-serif;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.f{background:var(--grad);color:#1a1204;border-color:transparent}.btn:hover{filter:brightness(1.15)}
+input,select{width:100%;background:#050505;border:1px solid #2f2819;border-radius:10px;padding:12px;color:#efe9dc;font:inherit;outline:none}input:focus{border-color:var(--g2)}
+.p{background:#0d0d0d;border:1px solid var(--line);border-radius:20px;padding:26px;margin-bottom:22px}h2{font-weight:300;font-size:26px}h3{font-weight:400;font-size:19px}
+.st{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.st div{background:#0d0d0d;border:1px solid var(--line);border-radius:16px;padding:20px}.st b{display:block;font-size:38px;font-weight:200}.st span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.add{display:grid;grid-template-columns:1.2fr 1fr 2fr 1fr auto;gap:10px;margin-top:16px}
+.r{display:grid;grid-template-columns:1.2fr 90px 2fr auto;gap:12px;align-items:center;padding:14px 0;border-top:1px solid #1b1710}.r code{color:var(--g1);letter-spacing:.14em}.r small{color:var(--g2);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.a{display:flex;gap:6px;flex-wrap:wrap}.m{min-height:22px;color:var(--g2);font-size:14px;margin-top:10px}
+.qb{display:none;margin-top:20px;padding:22px;border:1px dashed #3a3120;border-radius:16px;gap:24px;align-items:center;flex-wrap:wrap}.qb.on{display:flex}.qb svg{width:190px;border-radius:10px}.qb p{color:var(--mut);font-size:14px;word-break:break-all;margin:6px 0 14px}
+.lg{max-width:340px;margin:110px auto;text-align:center;display:grid;gap:12px}
+@media(max-width:860px){.st{grid-template-columns:1fr 1fr}.add,.r{grid-template-columns:1fr}}
+</style></head><body><div class="w"><header><span>AEON TAP</span><span><button class="btn" id="cp" style="display:none">Change password</button> <button class="btn" id="lo" style="display:none">Log out</button></span></header>
+<div id="login" class="lg"><h2>Owner login</h2><input id="pw" type="password" placeholder="Password" autocomplete="current-password"><button class="btn f" id="go">Log in</button><div class="m" id="lm"></div></div>
+<div id="app" style="display:none"><div class="p" id="pwp" style="display:none"><h3>Change password</h3><div class="add" style="grid-template-columns:1fr 1fr 1fr auto auto"><input id="pc" type="password" placeholder="Current password" autocomplete="current-password"><input id="pn" type="password" placeholder="New password (8+ characters)" autocomplete="new-password"><input id="pr" type="password" placeholder="Repeat new password" autocomplete="new-password"><button class="btn f" id="ps">Save</button><button class="btn" id="pcx">Cancel</button></div><div class="m" id="pm"></div></div><div class="st" id="st"></div>
+<div class="p"><h3>Create a new QR</h3><div class="add"><input id="nl" placeholder="Name, e.g. Karachi branch"><select id="nt"><option>Google review</option><option>Business card</option><option>Other</option></select><input id="nu" placeholder="Destination link, https://…"><input id="nc" placeholder="Custom code (optional)" maxlength="12"><button class="btn f" id="add">Create</button></div></div>
+<div class="p"><h3 style="margin-bottom:10px">Your QR codes</h3><input id="sq" placeholder="Search…" style="max-width:260px"><div id="rows"></div><div class="m" id="m"></div><div class="qb" id="qb"></div></div></div></div>
+<script>
+const $=s=>document.querySelector(s),B=location.origin+'/';let T=sessionStorage.getItem('t'),L=[],Q='';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const say=t=>$('#m').textContent=t;
+async function api(m,p,b){const r=await fetch('/api'+p,{method:m,headers:{'content-type':'application/json',Authorization:'Bearer '+T},body:b?JSON.stringify(b):undefined});const d=await r.json().catch(()=>({}));if(!r.ok){if(r.status===401&&p!=='/login')out();throw new Error(d.error||'Error')}return d}
+function out(){sessionStorage.removeItem('t');T=null;$('#app').style.display='none';$('#login').style.display='';$('#lo').style.display='none';$('#cp').style.display='none'}
+async function load(){L=await api('GET','/links');$('#login').style.display='none';$('#app').style.display='';$('#lo').style.display='';$('#cp').style.display='';draw()}
+function draw(){const n=t=>L.filter(l=>l.type===t).length;$('#st').innerHTML=[['Total QR codes',L.length],['Google review',n('Google review')],['Business card',n('Business card')],['Other',n('Other')]].map(a=>`<div><b>${a[1]}</b><span>${a[0]}</span></div>`).join('');
+$('#rows').innerHTML=L.filter(l=>(l.label+l.code+l.url).toLowerCase().includes(Q)).map(l=>`<div class="r" data-c="${l.code}"><div><input class="ln" value="${esc(l.label)}"><small>${esc(l.type)}</small></div><code>${l.code}</code><input class="lu" value="${esc(l.url)}"><div class="a"><button class="btn" data-a="save">Save</button><button class="btn" data-a="qr">QR</button><button class="btn" data-a="copy">Copy</button><a class="btn" href="${esc(l.url)}" target="_blank" rel="noopener">Test</a><button class="btn" data-a="del">Delete</button></div></div>`).join('')||'<p style="color:var(--mut);padding-top:14px">No QR codes yet.</p>'}
+const qm=t=>QRC(t);
+function svg(t,c){const q=qm(t),n=q.getModuleCount(),W=n+8;let d='';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))d+=`M${k+4},${r+4}h1v1h-1z`;return `<svg viewBox="0 0 ${W} ${W+5}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}"/><text x="${W/2}" y="${W+3.4}" text-anchor="middle" font-family="Arial" font-weight="700" font-size="3.4" letter-spacing=".5">${c}</text></svg>`}
+function png(t,c){const q=qm(t),n=q.getModuleCount(),s=14,cv=document.createElement('canvas');cv.width=(n+8)*s;cv.height=(n+13)*s;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#000';for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))x.fillRect((k+4)*s,(r+4)*s,s,s);x.font='700 '+3.4*s+'px Arial';x.textAlign='center';x.fillText(c,cv.width/2,(n+8)*s+3.4*s);return new Promise(r=>cv.toBlob(r))}
+async function act(f){try{await f();draw()}catch(e){say(e.message)}}
+$('#go').onclick=async()=>{try{T=(await api('POST','/login',{password:$('#pw').value})).token;sessionStorage.setItem('t',T);await load()}catch(e){$('#lm').textContent=e.message}};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};$('#lo').onclick=out;$('#sq').oninput=e=>{Q=e.target.value.toLowerCase();draw()};
+$('#add').onclick=()=>act(async()=>{const r=await api('POST','/links',{label:$('#nl').value.trim(),type:$('#nt').value,url:$('#nu').value.trim(),code:$('#nc').value.trim()});L.push(r);['nl','nu','nc'].forEach(i=>$('#'+i).value='');say('Created '+r.code+'. Press QR to view and download it.')});
+$('#rows').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const row=b.closest('.r'),c=row.dataset.c,l=L.find(x=>x.code===c),a=b.dataset.a;
+if(a==='save')act(async()=>{const r=await api('PUT','/links/'+c,{label:row.querySelector('.ln').value,type:l.type,url:row.querySelector('.lu').value.trim()});Object.assign(l,r);say('Saved. Printed QR codes now open the new link.')});
+if(a==='del'&&confirm('Delete this QR? Printed codes will stop working.'))act(async()=>{await api('DELETE','/links/'+c);L=L.filter(x=>x.code!==c);say('Deleted.')});
+if(a==='copy')navigator.clipboard.writeText(B+c).then(()=>say('Scan link copied.'),()=>say(B+c));
+if(a==='qr'){const u=B+c,q=$('#qb');q.className='qb on';q.innerHTML=svg(u,c)+`<div><h3>${esc(l.label)}</h3><p style="color:var(--g1);margin:0;letter-spacing:.2em">SERIAL ${c}</p><p>Scans to ${u}<br>Opens ${esc(l.url)}</p><button class="btn f" id="dl">Download PNG</button></div>`;$('#dl').onclick=async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(await png(u,c));a.download='aeon-tap-'+c+'.png';a.click()}}};
+$('#cp').onclick=()=>{$('#pwp').style.display='';['pc','pn','pr'].forEach(i=>$('#'+i).value='');$('#pm').textContent=''};
+$('#pcx').onclick=()=>$('#pwp').style.display='none';
+$('#ps').onclick=async()=>{const n=$('#pn').value;if(n.length<8)return $('#pm').textContent='Use at least 8 characters.';if(n!==$('#pr').value)return $('#pm').textContent='Passwords do not match.';try{const r=await api('POST','/password',{current:$('#pc').value,next:n});T=r.token;sessionStorage.setItem('t',T);$('#pwp').style.display='none';say('Password changed. Use the new one next time you log in.')}catch(e){$('#pm').textContent=e.message}};
+if(T)load().catch(out);
+</script></body></html>
