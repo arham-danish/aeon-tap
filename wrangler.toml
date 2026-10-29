@@ -8,4 +8,4 @@ binding = "ASSETS"
 
 [[kv_namespaces]]
 binding = "LINKS"
-id = "PASTE_YOUR_KV_ID_HERE"
+id = "0123456789abcdef0123456789abcdef"
